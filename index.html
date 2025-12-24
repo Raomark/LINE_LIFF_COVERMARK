@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Covermark Gift Experience</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #fcfbf9; }
+        .btn-gold { background-color: #b39359; color: white; border-radius: 50px; font-weight: 600; border: none; transition: 0.3s; }
+        .btn-gold:hover { background-color: #967a4a; transform: translateY(-2px); }
+        .gift-item { background: #fff; border-radius: 20px; padding: 20px; border: 2px solid transparent; transition: 0.4s; }
+        .swiper-slide-active .gift-item { border-color: #b39359; transform: scale(1.05); box-shadow: 0 15px 35px rgba(179,147,89,0.2); }
+        .shake-target { font-size: 80px; cursor: pointer; display: inline-block; }
+        .shaking { animation: shakeAnim 0.2s infinite; }
+        @keyframes shakeAnim {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            50% { transform: translate(-2px, -1px) rotate(-1deg); }
+            100% { transform: translate(1px, 1px) rotate(0deg); }
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="loader" class="vh-100 d-flex justify-content-center align-items-center">
+        <div class="spinner-border text-warning" role="status"></div>
+    </div>
+
+    <div id="step-landing" class="container vh-100 d-none flex-column justify-content-center align-items-center text-center">
+        <h1 class="fw-bold mb-4">ยินดีด้วย!</h1>
+        <p class="mb-5 text-muted">คุณลงทะเบียนเรียบร้อยแล้ว <br>มาร่วมส่งของขวัญสุดพิเศษกันเลย</p>
+        <button onclick="startExperience()" class="btn btn-gold btn-lg px-5">เริ่มเลย</button>
+    </div>
+
+    <div class="modal fade" id="termsModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-body p-4 text-center">
+                    <h5 class="fw-bold mb-3">เงื่อนไขการส่งของขวัญ</h5>
+                    <p class="small text-muted mb-4 text-start">1. สมาชิก 1 ท่านส่งได้ไม่จำกัดจำนวนครั้ง<br>2. ของขวัญนี้เป็นเพียงการส่งความสุขในรูปแบบดิจิทัล...</p>
+                    <button type="button" class="btn btn-gold w-100" data-bs-dismiss="modal">รับทราบแล้ว</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="step-sender" class="container py-4 d-none">
+        <h4 class="text-center fw-bold mb-4">เลือกของขวัญ</h4>
+        <div class="swiper giftSwiper mb-4">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide text-center p-3">
+                    <div class="gift-item" data-id="1" data-img="https://via.placeholder.com/300/b39359/fff?text=Gift+1">
+                        <img src="https://via.placeholder.com/200" class="img-fluid rounded-3 mb-2">
+                        <p class="m-0">Foundation Special</p>
+                    </div>
+                </div>
+                <div class="swiper-slide text-center p-3">
+                    <div class="gift-item" data-id="2" data-img="https://via.placeholder.com/300/b39359/fff?text=Gift+2">
+                        <img src="https://via.placeholder.com/200" class="img-fluid rounded-3 mb-2">
+                        <p class="m-0">Lipstick Luxury</p>
+                    </div>
+                </div>
+                </div>
+            <div class="swiper-pagination"></div>
+        </div>
+
+        <div class="mx-auto" style="max-width: 400px;">
+            <input type="text" id="fromName" class="form-control mb-3" placeholder="จาก (ชื่อผู้ส่ง)">
+            <input type="text" id="toName" class="form-control mb-3" placeholder="ถึง (ชื่อผู้รับ)">
+            <textarea id="giftMsg" class="form-control mb-2" rows="2" maxlength="50" placeholder="พิมพ์ข้อความ (สูงสุด 50 ตัวอักษร)"></textarea>
+            <p class="text-end small text-muted"><span id="charCount">0</span>/50</p>
+            <button onclick="sendGift()" class="btn btn-gold btn-lg w-100 shadow mt-2">ส่งของขวัญ</button>
+        </div>
+    </div>
+
+    <div id="step-receiver" class="container vh-100 d-none flex-column justify-content-center align-items-center text-center">
+        <div id="shake-container">
+            <h2 class="fw-bold mb-2">มีของขวัญส่งถึงคุณ!</h2>
+            <p class="text-muted mb-5">เขย่ามือถือ 5 วินาที เพื่อเปิดกล่อง</p>
+            <div id="gift-box" class="shake-target mb-4">🎁</div>
+            <div class="progress mx-auto" style="width: 200px; height: 10px;">
+                <div id="shake-bar" class="progress-bar bg-warning" style="width: 0%"></div>
+            </div>
+        </div>
+        <div id="reveal-container" class="d-none">
+            <div class="card border-0 shadow-lg p-4 rounded-4">
+                <img id="res-img" src="" class="img-fluid rounded-3 mb-3">
+                <h4 id="res-msg" class="fst-italic"></h4>
+                <p class="text-muted small mt-2">ส่งโดย: <span id="res-sender" class="fw-bold"></span></p>
+            </div>
+            <button onclick="window.location.href='https://line.me/ti/p/@yourlineoa'" class="btn btn-outline-secondary mt-4">ส่งให้เพื่อนบ้าง</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <script>
+        // Config & State
+        const REGISTER_URL = "https://cdp-occ-crm.pams.ai/crm/covermark/register";
+        const LIFF_ID = "2008756827-zANFfOMQ"; // **ใส่ LIFF ID ของคุณที่นี่**
+        let currentGift = { id: 1, img: "https://via.placeholder.com/300/b39359/fff?text=Gift+1" };
+
+        // Sounds
+        const sfxMagic = new Howl({ src: ['https://assets.mixkit.co/sfx/preview/mixkit-magic-sparkle-revelation-2862.mp3'] });
+        const sfxShake = new Howl({ src: ['https://assets.mixkit.co/sfx/preview/mixkit-hand-shaker-201.mp3'] });
+
+        // Initialize LIFF
+        async function initLIFF() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const isReceiver = urlParams.get('mode') === 'receive';
+
+                if (isReceiver) {
+                    showReceiver(urlParams);
+                } else {
+                    checkUserRegistration();
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        // STEP 1: Check Registration
+        async function checkUserRegistration() {
+            const profile = await liff.getProfile();
+            const userId = profile.userId;
+
+            // *** ตัวอย่างการเช็ค API (คุณต้องแก้ URL API จริงของคุณ) ***
+            // const res = await fetch(`https://your-api.com/check-regis?uid=${userId}`);
+            // const data = await res.json();
+            // let isRegistered = data.isRegistered;
+            
+            let isRegistered = false; // Mock ไว้ก่อน
+
+            if (!isRegistered) {
+                // ถ้ายังไม่ลงทะเบียน ให้ Redirect ไปหน้า Register
+                window.location.href = REGISTER_URL;
+            } else {
+                showView('step-landing');
+            }
+        }
+
+        function showView(id) {
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById(id).classList.remove('d-none');
+            document.getElementById(id).classList.add('d-flex');
+        }
+
+        function startExperience() {
+            const myModal = new bootstrap.Modal(document.getElementById('termsModal'));
+            myModal.show();
+            document.getElementById('step-landing').classList.replace('d-flex', 'd-none');
+            document.getElementById('step-sender').classList.remove('d-none');
+            initSwiper();
+        }
+
+        function initSwiper() {
+            const swiper = new Swiper(".giftSwiper", {
+                centeredSlides: true,
+                slidesPerView: 1.4,
+                pagination: { el: ".swiper-pagination" },
+                on: {
+                    slideChange: function () {
+                        const activeSlide = this.slides[this.activeIndex].querySelector('.gift-item');
+                        currentGift = { id: activeSlide.dataset.id, img: activeSlide.dataset.img };
+                    }
+                }
+            });
+        }
+
+        // STEP 5: Send Flex Message
+        async function sendGift() {
+            const sender = document.getElementById('fromName').value;
+            const receiver = document.getElementById('toName').value;
+            const msg = document.getElementById('giftMsg').value;
+
+            if(!sender || !receiver) return alert("กรุณากรอกชื่อผู้ส่งและผู้รับ");
+
+            const shareUrl = `https://liff.line.me/${LIFF_ID}?mode=receive&img=${encodeURIComponent(currentGift.img)}&msg=${encodeURIComponent(msg)}&from=${encodeURIComponent(sender)}`;
+
+            const result = await liff.shareTargetPicker([{
+                "type": "flex",
+                "altText": "คุณได้รับของขวัญจาก Covermark",
+                "contents": {
+                    "type": "bubble",
+                    "hero": { "type": "image", "url": currentGift.img, "size": "full", "aspectRatio": "1:1", "aspectMode": "cover" },
+                    "body": {
+                        "type": "box", "layout": "vertical", "contents": [
+                            { "type": "text", "text": "🎁 ของขวัญพิเศษสำหรับคุณ", "weight": "bold", "size": "lg" },
+                            { "type": "text", "text": "จากคุณ " + sender, "size": "sm", "color": "#b39359" }
+                        ]
+                    },
+                    "footer": {
+                        "type": "box", "layout": "vertical", "contents": [
+                            { "type": "button", "action": { "type": "uri", "label": "เปิดของขวัญ", "uri": shareUrl }, "style": "primary", "color": "#b39359" }
+                        ]
+                    }
+                }
+            }]);
+            
+            if(result) liff.closeWindow();
+        }
+
+        // STEP 6: Receiver Logic
+        function showReceiver(params) {
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('step-receiver').classList.remove('d-none');
+            document.getElementById('step-receiver').classList.add('d-flex');
+
+            let shakePower = 0;
+            const box = document.getElementById('gift-box');
+
+            box.onclick = () => { // Mock เขย่าด้วยการคลิก
+                shakePower += 20;
+                box.classList.add('shaking');
+                sfxShake.play();
+                document.getElementById('shake-bar').style.width = shakePower + '%';
+
+                if (shakePower >= 100) {
+                    setTimeout(() => {
+                        document.getElementById('shake-container').classList.add('hidden');
+                        document.getElementById('reveal-container').classList.remove('d-none');
+                        document.getElementById('res-img').src = params.get('img');
+                        document.getElementById('res-msg').innerText = `"${params.get('msg')}"`;
+                        document.getElementById('res-sender').innerText = params.get('from');
+                        sfxMagic.play();
+                        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#b39359', '#ffffff'] });
+                    }, 500);
+                } else {
+                    setTimeout(() => box.classList.remove('shaking'), 300);
+                }
+            };
+        }
+
+        document.getElementById('giftMsg').oninput = function() {
+            document.getElementById('charCount').innerText = this.value.length;
+        };
+
+        window.onload = initLIFF;
+    </script>
+</body>
+</html>
